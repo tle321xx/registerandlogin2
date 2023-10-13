@@ -1,39 +1,29 @@
-const express = require("express")
-const mongoose = require('mongoose')
-const cors = require('cors')
-const EmployeeModel = require('./models/Employee')
+// index.js
+const express = require('express');
+const dotenv = require('dotenv').config();
+const cors = require('cors');
+const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser')
 
-const app = express()
-app.use(express.json())
-app.use(cors())
+mongoose.connect(process.env.DB_URL)
+  .then(() => console.log('Database connected'))
+  .catch((err) => console.log('Database not connected', err));
 
-mongoose.connect("mongodb://127.0.0.1:27017/employee")
+const app = express();
+const corsOptions = {
+    origin: 'http://localhost:5173',
+    credentials: true,
+  };
+  
+  app.use(cors(corsOptions));
 
-app.post('/login', (req,res)=> {
-    const {email, password} = req.body
-    EmployeeModel.findOne({email: email})
-    .then(user => {
-        if(user) {
-            if(user.password === password){
-                res.json("Success")
-            } else {
-                res.json("Password incorrect")
-            }
-        } else {
-            res.json("No record ")
-        }
-    })
-})
+app.use(express.json());
+app.use(cookieParser())
+app.use(express.urlencoded({extended:false}))
 
-app.post('/register', (req,res) => {
-    EmployeeModel.create(req.body)
-    .then(employees => res.json(employees))
-    .catch(err => req.json(err))
-})
+app.use('/', require('./routes/authRoutes'));
 
-app.listen(3001, () => {
-    console.log("server is running")
-})
-
-
-
+const port = 8000;
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
